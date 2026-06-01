@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 📥 카드 그리기 함수
-    function drawCard(docId, title, price, shortDesc, longDesc, imageUrls) {
+    function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order, allCardsData) {
         const typeContainer = document.getElementById("type-container");
         const newCard = document.createElement("div");
         newCard.className = "type-card";
@@ -61,6 +61,12 @@ document.addEventListener("DOMContentLoaded", () => {
         let adminBtnsHtml = "";
         if (getAdminStatus()) {
             adminBtnsHtml = `
+                <!-- 좌측 상단: 위아래 순서 변경 화살표 버튼 ↕️ -->
+                <div style="position:absolute; top:15px; left:15px; z-index:10; display:flex; gap:5px;">
+                    <button class="move-up-btn" data-id="${docId}" data-order="${order}" style="background:#FFF; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B; font-size:0.8rem; display:flex; justify-content:center; align-items:center;">▲</button>
+                    <button class="move-down-btn" data-id="${docId}" data-order="${order}" style="background:#FFF; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B; font-size:0.8rem; display:flex; justify-content:center; align-items:center;">▼</button>
+                </div>
+                <!-- 우측 상단: 수정 및 삭제 버튼 🛠️ -->
                 <div style="position:absolute; top:15px; right:15px; z-index:10; display:flex; gap:8px;">
                     <button class="edit-card-btn" data-id="${docId}" style="background:#FFDE6A; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">✏️</button>
                     <button class="delete-card-btn" data-id="${docId}" style="background:#FF6B6B; color:white; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">❌</button>
@@ -79,12 +85,85 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         newCard.addEventListener("click", (e) => {
-            if (e.target.classList.contains("delete-card-btn") || e.target.classList.contains("edit-card-btn")) return;
+            const tc = e.target.classList;
+            if (tc.contains("delete-card-btn") || tc.contains("edit-card-btn") || tc.contains("move-up-btn") || tc.contains("move-down-btn")) return;
             openDetailModal(title, price, longDesc, imgs);
         });
 
         typeContainer.appendChild(newCard);
     }
+
+    // 🔼 위로 한 칸 보내기 기능
+    document.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("move-up-btn")) {
+            e.stopPropagation();
+            const currentId = e.target.getAttribute("data-id");
+            const currentOrder = parseInt(e.target.getAttribute("data-order"));
+
+            // 내 바로 위에 있는 카드 찾기
+            const snapshot = await db.collection("commission_types").orderBy("order", "desc").get();
+            let prevDoc = null;
+            
+            snapshot.docs.forEach(doc => {
+                const docOrder = doc.data().order || 0;
+                if (docOrder < currentOrder) {
+                    if (!prevDoc || docOrder > prevDoc.data().order) {
+                        prevDoc = doc;
+                    }
+                }
+            });
+
+            if (prevDoc) {
+                // 내 순서와 윗 카드의 순서를 맞바꾸기
+                const prevId = prevDoc.id;
+                const prevOrder = prevDoc.data().order;
+
+                const batch = db.batch();
+                batch.update(db.collection("commission_types").doc(currentId), { order: prevOrder });
+                batch.update(db.collection("commission_types").doc(prevId), { order: currentOrder });
+                await batch.commit();
+                location.reload();
+            } else {
+                alert("이미 맨 위에 있는 빵입니다! 🍞");
+            }
+        }
+    });
+
+    // 🔽 아래로 한 칸 보내기 기능
+    document.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("move-down-btn")) {
+            e.stopPropagation();
+            const currentId = e.target.getAttribute("data-id");
+            const currentOrder = parseInt(e.target.getAttribute("data-order"));
+
+            // 내 바로 아래에 있는 카드 찾기
+            const snapshot = await db.collection("commission_types").orderBy("order", "asc").get();
+            let nextDoc = null;
+            
+            snapshot.docs.forEach(doc => {
+                const docOrder = doc.data().order || 0;
+                if (docOrder > currentOrder) {
+                    if (!nextDoc || docOrder < nextDoc.data().order) {
+                        nextDoc = doc;
+                    }
+                }
+            });
+
+            if (nextDoc) {
+                // 내 순서와 아랫 카드의 순서를 맞바꾸기
+                const nextId = nextDoc.id;
+                const nextOrder = nextDoc.data().order;
+
+                const batch = db.batch();
+                batch.update(db.collection("commission_types").doc(currentId), { order: nextOrder });
+                batch.update(db.collection("commission_types").doc(nextId), { order: currentOrder });
+                await batch.commit();
+                location.reload();
+            } else {
+                alert("이미 맨 아래에 있는 빵입니다! 🍞");
+            }
+        }
+    });
 
     // ❌ 빵 폐기하기(삭제) 기능
     document.addEventListener("click", (e) => {
@@ -236,18 +315,19 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
     }
 
-    // 🚚 창고에서 데이터 다 긁어오기
-    db.collection("commission_types").orderBy("timestamp", "asc").get().then((snapshot) => {
+    // 🚚 창고에서 order(순서) 기준으로 정렬해서 가져오기!
+    db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
         snapshot.forEach((doc) => {
             const data = doc.data();
             const shortDesc = data.shortDesc || data.desc || "";
             const longDesc = data.longDesc || data.desc || "";
             const imgs = data.imageUrl || [];
-            drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs);
+            const order = data.order || 0;
+            drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs, order);
         });
     });
 
-    // 🎨 [핵심 업데이트] 이미지 다이어트(압축) 마법 함수
+    // 🎨 이미지 다이어트(압축) 마법 함수
     function resizeImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -258,7 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     let width = img.width;
                     let height = img.height;
 
-                    // 가로 최대 1024px 기준으로 비율 맞춰 줄이기 (웹용 최적화)
                     const MAX_WIDTH = 1024;
                     if (width > MAX_WIDTH) {
                         height *= MAX_WIDTH / width;
@@ -270,7 +349,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const ctx = canvas.getContext("2d");
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // 화질을 0.7(70%) 수준으로 낮춰서 글자 용량 대폭 압축!
                     const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
                     resolve(compressedBase64);
                 };
@@ -280,10 +358,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎨 다중 업로드 등록 버튼 기능
+    // 🎨 다중 업로드 등록 버튼 기능 (등록 시 고유 순서 번호 부여)
     const submitBtn = document.getElementById("submit-btn");
     if (submitBtn) {
-        submitBtn.addEventListener("click", () => {
+        submitBtn.addEventListener("click", async () => {
             const title = document.getElementById("type-title").value;
             const price = document.getElementById("type-price").value;
             const shortDesc = document.getElementById("type-short-desc").value; 
@@ -298,34 +376,36 @@ document.addEventListener("DOMContentLoaded", () => {
             submitBtn.disabled = true;
             submitBtn.innerText = "빵 맛있게 다이어트 시키는 중... 🥖";
 
-            // 업로드할 때도 이미지 압축 함수를 거치도록 변경! 
-            const resizePromises = Array.from(imageFiles).slice(0, 5).map(file => resizeImage(file));
+            try {
+                // 현재 등록된 빵 중 가장 높은 order 번호 찾기 (순서가 꼬이지 않게 계속 뒤로 붙임)
+                const snapshot = await db.collection("commission_types").orderBy("order", "desc").limit(1).get();
+                let nextOrder = 1;
+                if (!snapshot.empty) {
+                    nextOrder = (snapshot.docs[0].data().order || 0) + 1;
+                }
 
-            Promise.all(resizePromises).then((base64Images) => {
-                db.collection("commission_types").add({
+                const resizePromises = Array.from(imageFiles).slice(0, 5).map(file => resizeImage(file));
+                const base64Images = await Promise.all(resizePromises);
+
+                const docRef = await db.collection("commission_types").add({
                     title: title,
                     price: price,
                     shortDesc: shortDesc,
                     longDesc: longDesc,
                     imageUrl: base64Images, 
+                    order: nextOrder, // 고유 순서 번호 저장!
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then((docRef) => {
-                    drawCard(docRef.id, title, price, shortDesc, longDesc, base64Images);
-                    alert("창고에 안전하게 다중 샘플 등록 완료! 🍮");
-
-                    document.getElementById("type-title").value = "";
-                    document.getElementById("type-price").value = "";
-                    document.getElementById("type-short-desc").value = "";
-                    document.getElementById("type-long-desc").value = "";
-                    document.getElementById("type-image").value = "";
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "새 빵 등록하기(업로드)";
-                }).catch((err) => {
-                    alert("등록 실패- 에러: " + err.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "새 빵 등록하기(업로드)";
                 });
-            });
+
+                drawCard(docRef.id, title, price, shortDesc, longDesc, base64Images, nextOrder);
+                alert("창고에 안전하게 다중 샘플 등록 완료! 🍮");
+                location.reload(); // 순서 배치를 정확히 그리기 위해 리로드
+
+            } catch (err) {
+                alert("등록 실패- 에러: " + err.message);
+                submitBtn.disabled = false;
+                submitBtn.innerText = "새 빵 등록하기(업로드)";
+            }
         });
     }
 
