@@ -1,0 +1,191 @@
+/* 전체 기본 세팅 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Malgun Gothic', sans-serif;
+}
+
+/* 🍮 전체 배경화면 (도트 크기를 훨씬 크게 키웠어요!) */
+body {
+    background-color: #FFFDF3; 
+    color: #5C4033; 
+    padding: 30px 15px;
+    /* 왕 도트 몽글몽글 감성 배경 세팅 */
+    background-image: radial-gradient(#F7DC81 3.5px, transparent 3.5px); 
+    background-size: 40px 40px; 
+}
+
+/* 🌐 인터넷 웹브라우저 창 프레임 */
+.window-frame {
+    max-width: 580px;
+    margin: 0 auto;
+    background-color: #FFFFFF;
+    border: 3.5px solid #4A2E1B;
+    border-radius: 24px;
+    box-shadow: 8px 8px 0px #4A2E1B; /* 묵직하고 귀여운 입체 그림자 */
+    overflow: hidden;
+}
+
+/* 인터넷 창 윗부분 (빨노초 버튼 있는 곳) */
+.window-header {
+    background-color: #FFF6D6;
+    border-bottom: 3.5px solid #4A2E1B;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 동글동글 브라우저 조작 버튼 */
+.window-buttons {
+    display: flex;
+    gap: 6px;
+}
+.win-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #4A2E1B;
+}
+.win-dot.red { background-color: #ffae00; }
+.win-dot.yellow { background-color: #ffdd1d; }
+.win-dot.green { background-color: #ffeb9a; }
+
+/* 인터넷 주소창 바 */
+.window-address-bar {
+    flex-grow: 1;
+    background-color: #FFFFFF;
+    border: 2.5px solid #4A2E1B;
+    border-radius: 30px;
+    padding: 3px 15px;
+    font-size: 0.8rem;
+    color: #A08472;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* 진짜 내용물이 담기는 공간 패딩 */
+.window-content {
+    padding: 40px 20px;
+}
+
+/* Header & Badge */
+.main-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 35px;
+}
+.main-header h1 {
+    font-size: 2.1rem;
+    font-weight: 900;
+    color: #4A2E1B;
+    margin-bottom: 15px;
+    letter-spacing: -1px;
+}
+.status-badge {
+    display: inline-block;
+    background-color: #FFDE6A;
+    color: #4A2E1B;
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    border: 3px solid #4A2E1B;
+    box-shadow: 0px 4px 0px #4A2E1B;
+    margin-bottom: 10px;
+}
+.admin-only-btn {
+    background: none;
+    border: none;
+    color: #8B5A2B;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.6;
+}
+
+/* Container & Boxes */
+.container {
+    max-width: 100%;
+}
+.notice-box {
+    background-color: #FFFDF8;
+    border: 3px solid #4A2E1B;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 25px;
+    box-shadow: 5px 5px 0px #4A2E1B;
+}
+.notice-box h3 {
+    margin-bottom: 10px;
+    font-size: 1.15rem;
+    color: #4A2E1B;
+    border-bottom: 3px dashed #FFDE6A;
+    padding-bottom: 2px;
+    display: inline-block;
+}
+
+/* 💬 1:1 문의하기 버튼 스타일 (푸딩처럼 찰랑거리는 디자인) */
+.contact-section {
+    margin-bottom: 35px;
+}
+.contact-btn {
+    display: block;
+    text-align: center;
+    background-color: #FF9F43; /* 산뜻하고 맛있는 오렌지 빵 색상 */
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 1.05rem;
+    padding: 15px;
+    border: 3px solid #4A2E1B;
+    border-radius: 18px;
+    text-decoration: none;
+    box-shadow: 0px 5px 0px #4A2E1B;
+    transition: all 0.1s ease;
+}
+.contact-btn:hover {
+    background-color: #FFB366;
+}
+.contact-btn:active {
+    transform: translateY(5px);
+    box-shadow: none;
+}
+
+/* 🛠️ 관리자 폼 */
+.style-admin { background-color: #FFFDF3 !important; border-style: dashed !important; }
+.upload-form input, .upload-form textarea {
+    width: 100%; padding: 12px; margin-bottom: 12px;
+    border: 3px solid #4A2E1B; border-radius: 12px; font-weight: bold;
+}
+.upload-form button {
+    width: 100%; padding: 14px; background-color: #FFDE6A;
+    border: 3px solid #4A2E1B; border-radius: 12px; font-weight: bold;
+    color: #4A2E1B; cursor: pointer; box-shadow: 0px 4px 0px #4A2E1B;
+}
+
+/* 🍮 커미션 카드 (전체 테두리 200% 완벽 장착) */
+.type-card {
+    background-color: #FFFFFF;
+    border: 3px solid #4A2E1B;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 6px 6px 0px #4A2E1B;
+    margin-bottom: 35px;
+}
+.card-img {
+    width: 100%;
+    height: 380px;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 3px solid #4A2E1B;
+}
+.card-info {
+    padding: 22px;
+    text-align: left;
+}
+.card-info h2 { font-size: 1.35rem; font-weight: 900; color: #4A2E1B; margin-bottom: 6px; }
+.card-info .price { font-size: 1.2rem; color: #D35400; font-weight: 800; margin-bottom: 14px; }
+.card-info .desc { font-size: 0.95rem; line-height: 1.6; color: #5C4033; word-break: break-all; }

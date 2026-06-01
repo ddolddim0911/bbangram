@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍮 빵집</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+
+    <div class="window-frame">
+        <div class="window-header">
+            <div class="window-buttons">
+                <span class="win-dot red"></span>
+                <span class="win-dot yellow"></span>
+                <span class="win-dot green"></span>
+            </div>
+            <div class="window-address-bar">https://ram-bakery.room</div>
+        </div>
+
+        <div class="window-content">
+            <header class="main-header">
+                <h1>김람네 빵집</h1>
+                <div class="status-badge">OPEN</div>
+                <button id="login-btn" class="admin-only-btn">🔑 관리자 로그인</button>
+            </header>
+
+            <main class="container">
+                
+                <section id="admin-panel" class="notice-box style-admin" style="display: none;">
+                    <h3>🍞 빵집 주인 전용 메뉴</h3>
+                    <div class="upload-form">
+                        <input type="text" id="type-title" placeholder="타입 이름 (예: A타입 두상)">
+                        <input type="text" id="type-price" placeholder="가격 (예: 30,000원)">
+                        
+                        <input type="text" id="type-short-desc" placeholder="카드용 짧은 설명 (예: 선화 위주 / 작업 기간 2주)">
+                        <textarea id="type-long-desc" placeholder="팝업창에만 보여줄 아주 상세한 내용을 적어주세요."></textarea>
+                        
+                        <input type="file" id="type-image" accept="image/*">
+                        <button id="submit-btn">새 빵 등록하기(업로드)</button>
+                    </div>
+                </section>
+
+                <section class="notice-box">
+                    <h3>📢</h3>
+                    <p>빵집 방문을 환영합니다! 슬롯이 열려있다면 언제든 신청해 주세요! 무단 도용 및 불펌은 금지합니다~ XD</p>
+                </section>
+
+                <section class="contact-section">
+                    <a href="https://open.kakao.com/o/sN9q1Fxi" target="_blank" class="contact-btn">
+                        🍞 빵집 문의 및 신청>>
+                    </a>
+                </section>
+
+                <section id="type-container" class="type-container">
+                    </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
