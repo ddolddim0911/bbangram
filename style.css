@@ -177,10 +177,10 @@ body {
 }
 .card-img {
     width: 100%;
-    height: 200px; /* 또는 람님이 설정한 높이 */
-    background-size: contain; /* 이 부분을 cover에서 contain으로 변경! */
+    height: 380px;
+    background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
+    border-bottom: 3px solid #4A2E1B;
 }
 .card-info {
     padding: 22px;
