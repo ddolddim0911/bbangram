@@ -33,15 +33,16 @@
             <main class="container">
                 
                 <section id="admin-panel" class="notice-box style-admin" style="display: none;">
-                    <h3>🍞 빵집 주인 전용 메뉴</h3>
+                    <h3>🍞 빵집 주인 전용 메뉴 (등록)</h3>
                     <div class="upload-form">
                         <input type="text" id="type-title" placeholder="타입 이름 (예: A타입 두상)">
                         <input type="text" id="type-price" placeholder="가격 (예: 30,000원)">
-                        
                         <input type="text" id="type-short-desc" placeholder="카드용 짧은 설명 (예: 선화 위주 / 작업 기간 2주)">
                         <textarea id="type-long-desc" placeholder="팝업창에만 보여줄 아주 상세한 내용을 적어주세요."></textarea>
                         
-                        <input type="file" id="type-image" accept="image/*">
+                        <label style="font-size:0.85rem; color:#8B5A2B; font-weight:bold; display:block; margin-bottom:5px;">📸 샘플 사진 등록 (최대 5장 선택 가능):</label>
+                        <input type="file" id="type-image" accept="image/*" multiple>
+                        
                         <button id="submit-btn">새 빵 등록하기(업로드)</button>
                     </div>
                 </section>
@@ -60,6 +61,27 @@
                 <section id="type-container" class="type-container">
                     </section>
             </main>
+        </div>
+    </div>
+
+    <div id="edit-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(74, 46, 27, 0.4); z-index: 2000; justify-content: center; alignItems: center; padding: 20px;">
+        <div class="window-frame" style="width:100%; max-width:450px; background:#FFFDF8;">
+            <div class="window-header">
+                <div class="window-buttons"><span class="win-dot red" id="close-edit-btn" style="cursor:pointer;"></span></div>
+                <div class="window-address-bar">✏️ 빵 내용 수정하기</div>
+            </div>
+            <div class="window-content" style="padding:20px;">
+                <input type="hidden" id="edit-doc-id">
+                <input type="text" id="edit-title" style="width:100%; padding:10px; margin-bottom:10px; border:3px solid #4A2E1B; border-radius:10px; font-weight:bold;">
+                <input type="text" id="edit-price" style="width:100%; padding:10px; margin-bottom:10px; border:3px solid #4A2E1B; border-radius:10px; font-weight:bold;">
+                <input type="text" id="edit-short-desc" style="width:100%; padding:10px; margin-bottom:10px; border:3px solid #4A2E1B; border-radius:10px; font-weight:bold;">
+                <textarea id="edit-long-desc" style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:3px solid #4A2E1B; border-radius:10px; font-weight:bold;"></textarea>
+                
+                <label style="font-size:0.8rem; color:#8B5A2B; font-weight:bold; display:block; margin-bottom:5px;">📸 사진도 새로 바꾸려면 선택 (기존 사진 유지하려면 비워두기):</label>
+                <input type="file" id="edit-image" accept="image/*" multiple style="width:100%; margin-bottom:15px;">
+                
+                <button id="update-btn" style="width:100%; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer; box-shadow:0 4px 0 #4A2E1B;">수정 완료하기 📋</button>
+            </div>
         </div>
     </div>
 
