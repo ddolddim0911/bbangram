@@ -272,11 +272,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="window-content" style="max-height:80vh; overflow-y:auto; padding:20px;">
                     <div style="position:relative; width:100%; margin-bottom:20px;">
                         <img id="modal-slider-img" src="${imgs[0]}" style="width:100%; height:auto; border:3px solid #4A2E1B; border-radius:18px; box-shadow:4px 4px 0 #4A2E1B; display:block;">
-                        ${showArrows ? `
-                            <button id="prev-img-btn" style="position:absolute; top:50%; left:10px; transform:translateY(-50%); background:#FFDE6A; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">◀</button>
-                            <button id="next-img-btn" style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:#FFDE6A; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">▶</button>
-                            <div id="img-counter" style="text-align:center; margin-top:10px; font-weight:bold; color:#4A2E1B; font-size:0.9rem;">1 / ${imgs.length}</div>
-                        ` : ''}
+                        <div style="width:100%; height:400px; background:#000; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden;">
+                        <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
+                        </div>
                     </div>
                     <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
                     <p style="font-size:1.3rem; color:#D35400; font-weight:800; margin-bottom:15px; border-bottom:3px dashed #FFDE6A; padding-bottom:8px;">${price}</p>
