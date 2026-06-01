@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginBtn) {
         loginBtn.addEventListener("click", () => {
             const password = prompt("비밀방 마스터 암호를 입력하세요:");
-            if (password === "1234") { 
+            if (password === "yena1012!") { 
                 alert("비밀방 로그인 성공! 🍯");
                 sessionStorage.setItem("isAdmin", "true");
                 checkLoginStatus();
