@@ -12,14 +12,13 @@ const db = firebase.firestore();
 
 document.addEventListener("DOMContentLoaded", () => {
     const getAdminStatus = () => sessionStorage.getItem("isAdmin") === "true";
-    
+
     function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order) {
         const typeContainer = document.getElementById("type-container");
         const newCard = document.createElement("div");
         newCard.className = "type-card";
         newCard.style.position = "relative";
         
-        // 데이터에서 이미지를 가져올 때 배열인지 확인
         const imgs = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
         const mainImg = imgs[0] || "";
 
@@ -46,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         newCard.onclick = (e) => {
             if(e.target.tagName === 'BUTTON') return;
-            // imgs 배열을 통째로 넘겨줍니다!
             openDetailModal(title, price, longDesc, imgs);
         };
         typeContainer.appendChild(newCard);
@@ -64,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ${imgs.length > 1 ? `
                         <button id="prev" style="position:absolute; left:10px; cursor:pointer;">◀</button>
                         <button id="next" style="position:absolute; right:10px; cursor:pointer;">▶</button>
-                        <div id="counter" style="position:absolute; bottom:10px; font-weight:bold;">1 / ${imgs.length}</div>
+                        <div id="counter" style="position:absolute; bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>
                     ` : ''}
                 </div>
                 <h2>${title}</h2>
@@ -76,24 +74,40 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(modal);
 
         if(imgs.length > 1) {
-            modal.querySelector("#prev").onclick = () => { 
-                idx = (idx - 1 + imgs.length) % imgs.length; 
-                modal.querySelector("#modal-img").src = imgs[idx]; 
-                modal.querySelector("#counter").innerText = `${idx + 1} / ${imgs.length}`;
-            };
-            modal.querySelector("#next").onclick = () => { 
-                idx = (idx + 1) % imgs.length; 
-                modal.querySelector("#modal-img").src = imgs[idx]; 
-                modal.querySelector("#counter").innerText = `${idx + 1} / ${imgs.length}`;
-            };
+            modal.querySelector("#prev").onclick = () => { idx = (idx-1+imgs.length)%imgs.length; modal.querySelector("#modal-img").src = imgs[idx]; modal.querySelector("#counter").innerText = `${idx+1} / ${imgs.length}`; };
+            modal.querySelector("#next").onclick = () => { idx = (idx+1)%imgs.length; modal.querySelector("#modal-img").src = imgs[idx]; modal.querySelector("#counter").innerText = `${idx+1} / ${imgs.length}`; };
         }
         modal.querySelector("#close").onclick = () => modal.remove();
     }
 
-    db.collection("commission_types").orderBy("order", "asc").get().then(snapshot => {
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            drawCard(doc.id, data.title, data.price, data.shortDesc, data.longDesc, data.imageUrl || data.imageUrls, data.order);
+    async function swapOrder(id, order, dir) {
+        const snap = await db.collection("commission_types").orderBy("order", dir === 'up' ? "desc" : "asc").get();
+        let target = null;
+        snap.docs.forEach(doc => {
+            const docOrder = doc.data().order || 0;
+            if((dir === 'up' && docOrder < order) || (dir === 'down' && docOrder > order)) {
+                if(!target || (dir === 'up' ? docOrder > target.data().order : docOrder < target.data().order)) target = doc;
+            }
+        });
+        if(target) {
+            const batch = db.batch();
+            batch.update(db.collection("commission_types").doc(id), { order: target.data().order });
+            batch.update(db.collection("commission_types").doc(target.id), { order: order });
+            await batch.commit();
+            location.reload();
+        }
+    }
+
+    document.addEventListener("click", e => {
+        if(e.target.classList.contains("move-up-btn")) swapOrder(e.target.dataset.id, parseInt(e.target.dataset.order), 'up');
+        if(e.target.classList.contains("move-down-btn")) swapOrder(e.target.dataset.id, parseInt(e.target.dataset.order), 'down');
+        if(e.target.classList.contains("delete-card-btn")) { if(confirm("삭제할까요?")) db.collection("commission_types").doc(e.target.dataset.id).delete().then(() => location.reload()); }
+    });
+
+    db.collection("commission_types").orderBy("order", "asc").get().then(snap => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            drawCard(doc.id, d.title, d.price, d.shortDesc, d.longDesc, d.imageUrl, d.order);
         });
     });
 });
