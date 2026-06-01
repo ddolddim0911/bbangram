@@ -183,13 +183,14 @@ body {
 
 .card-img {
     width: 100%;
-    /* 높이를 200px 고정에서 auto(자동)로 변경합니다 */
-    min-height: 200px; 
-    /* cover를 쓰되, background-position을 써서 중심을 잘 맞춰줍니다 */
+    /* 높이를 200px에서 250px 정도로 조금 더 늘려주면 비율이 더 예쁩니다 */
+    height: 250px; 
+    /* 핵심: 이미지를 자르지 않고 전체를 다 보여주는 설정! */
     background-size: contain; 
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #f0e6d2; /* 사진 주변이 비면 보여질 배경색 */
+    /* 사진 주변 여백을 빵집 테마색으로 채워주면 깔끔해요 */
+    background-color: #FFFDF8; 
     border-radius: 10px;
 }
 .card-info {
