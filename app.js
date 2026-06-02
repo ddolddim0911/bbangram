@@ -244,74 +244,73 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔍 상세 팝업창(모달) 열기 함수
-    function openDetailModal(title, price, longDesc, imgs) {
-        if (document.getElementById("detail-modal")) return;
+// 🔍 상세 팝업창(모달) 열기 함수
+function openDetailModal(title, price, longDesc, imgs) {
+    if (document.getElementById("detail-modal")) return;
 
-        let currentImgIdx = 0;
-        const modal = document.createElement("div");
-        modal.id = "detail-modal";
-        Object.assign(modal.style, {
-            position: "fixed", top: "0", left: "0", width: "100%", height: "100%",
-            backgroundColor: "rgba(74, 46, 27, 0.4)", zIndex: "1000",
-            display: "flex", justifyContent: "center", alignItems: "center", padding: "20px"
-        });
+    let currentImgIdx = 0;
+    const modal = document.createElement("div");
+    modal.id = "detail-modal";
+    Object.assign(modal.style, {
+        position: "fixed", top: "0", left: "0", width: "100%", height: "100%",
+        backgroundColor: "rgba(74, 46, 27, 0.4)", zIndex: "1000",
+        display: "flex", justifyContent: "center", alignItems: "center", padding: "20px"
+    });
 
-        const showArrows = imgs.length > 1;
+    const showArrows = imgs.length > 1;
 
-        modal.innerHTML = `
-            <div class="window-frame" style="width:100%; max-width:500px; background:#FFFDF8; animation: popUp 0.25s ease-out;">
-                <div class="window-header">
-                    <div class="window-buttons">
-                        <span class="win-dot red close-modal" style="background-color:#ffae00; cursor:pointer;"></span>
-                        <span class="win-dot yellow" style="background-color:#ffdd1d;"></span>
-                        <span class="win-dot green" style="background-color:#ffeb9a;"></span>
-                    </div>
-                    <div class="window-address-bar">📋 빵집 상세 메뉴판</div>
+    modal.innerHTML = `
+        <div class="window-frame" style="width:100%; max-width:500px; background:#FFFDF8; animation: popUp 0.25s ease-out; border: 3px solid #4A2E1B; border-radius: 20px; overflow: hidden;">
+            <div class="window-header" style="background: #FFDE6A; padding: 10px; display: flex; align-items: center; border-bottom: 3px solid #4A2E1B;">
+                <div class="window-buttons" style="display:flex; gap: 5px;">
+                    <span class="win-dot red close-modal" style="width:12px; height:12px; border-radius:50%; background-color:#FF6B6B; cursor:pointer;"></span>
+                    <span class="win-dot yellow" style="width:12px; height:12px; border-radius:50%; background-color:#ffdd1d;"></span>
+                    <span class="win-dot green" style="width:12px; height:12px; border-radius:50%; background-color:#ffeb9a;"></span>
                 </div>
-                <div class="window-content" style="max-height:80vh; overflow-y:auto; padding:20px;">
-                    <div style="position:relative; width:100%; margin-bottom:20px;">
-                        <img id="modal-slider-img" src="${imgs[0]}" style="width:100%; height:auto; border:3px solid #4A2E1B; border-radius:18px; box-shadow:4px 4px 0 #4A2E1B; display:block;">
-                        <div style="width:100%; height:400px; background:#000; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden;">
-                        <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
-                        </div>
-                    </div>
-                    <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
-                    <p style="font-size:1.3rem; color:#D35400; font-weight:800; margin-bottom:15px; border-bottom:3px dashed #FFDE6A; padding-bottom:8px;">${price}</p>
-                    <p style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all;">${longDesc}</p>
-                    <button class="close-modal" style="width:100%; margin-top:20px; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer; box-shadow:0 4px 0 #4A2E1B;">닫기 🥖</button>
-                </div>
+                <div class="window-address-bar" style="margin-left: 15px; font-weight: bold; color: #4A2E1B;">📋 빵집 상세 메뉴판</div>
             </div>
-        `;
+            <div class="window-content" style="max-height:70vh; overflow-y:auto; padding:20px;">
+                <div style="position:relative; width:100%; height:400px; background:#000; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden; margin-bottom:20px;">
+                    <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
+                    ${showArrows ? `
+                        <button id="prev-img-btn" style="position:absolute; top:50%; left:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">◀</button>
+                        <button id="next-img-btn" style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">▶</button>
+                    ` : ''}
+                </div>
+                ${showArrows ? `<div id="img-counter" style="text-align:center; margin-bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>` : ''}
+                <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
+                <p style="font-size:1.3rem; color:#D35400; font-weight:800; margin-bottom:15px; border-bottom:3px dashed #FFDE6A; padding-bottom:8px;">${price}</p>
+                <p style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all;">${longDesc}</p>
+                <button class="close-modal" style="width:100%; margin-top:20px; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer;">닫기 🥖</button>
+            </div>
+        </div>
+    `;
 
-        const style = document.createElement("style");
-        style.innerHTML = `@keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }`;
-        document.head.appendChild(style);
+    document.body.appendChild(modal);
 
-        document.body.appendChild(modal);
-
-        if (showArrows) {
-            const sliderImg = modal.querySelector("#modal-slider-img");
-            const counterTxt = modal.querySelector("#img-counter");
-            
-            modal.querySelector("#prev-img-btn").addEventListener("click", () => {
-                currentImgIdx = (currentImgIdx === 0) ? imgs.length - 1 : currentImgIdx - 1;
-                sliderImg.src = imgs[currentImgIdx];
-                counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
-            });
-
-            modal.querySelector("#next-img-btn").addEventListener("click", () => {
-                currentImgIdx = (currentImgIdx === imgs.length - 1) ? 0 : currentImgIdx + 1;
-                sliderImg.src = imgs[currentImgIdx];
-                counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
-            });
-        }
-
-        modal.querySelectorAll(".close-modal").forEach(btn => {
-            btn.addEventListener("click", () => modal.remove());
-        });
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+    // 이미지 슬라이더 로직
+    if (showArrows) {
+        const sliderImg = modal.querySelector("#modal-slider-img");
+        const counterTxt = modal.querySelector("#img-counter");
+        modal.querySelector("#prev-img-btn").onclick = (e) => {
+            e.stopPropagation();
+            currentImgIdx = (currentImgIdx === 0) ? imgs.length - 1 : currentImgIdx - 1;
+            sliderImg.src = imgs[currentImgIdx];
+            counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
+        };
+        modal.querySelector("#next-img-btn").onclick = (e) => {
+            e.stopPropagation();
+            currentImgIdx = (currentImgIdx === imgs.length - 1) ? 0 : currentImgIdx + 1;
+            sliderImg.src = imgs[currentImgIdx];
+            counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
+        };
     }
+
+    // 닫기 이벤트 통합
+    const closeModal = () => modal.remove();
+    modal.querySelectorAll(".close-modal").forEach(btn => btn.onclick = closeModal);
+    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+}
 
     // 🚚 창고에서 order(순서) 기준으로 정렬해서 가져오기!
     db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
