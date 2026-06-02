@@ -292,6 +292,11 @@ function openDetailModal(title, price, longDesc, imgs) {
                 const linkedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
                 descEl.innerHTML = linkedText;
                 </script>
+                    const descEl = document.getElementById("long-desc-area");
+                 const text = ${JSON.stringify(longDesc)}; 
+                 const linkedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
+                 descEl.innerHTML = linkedText.replace(/\n/g, '<br>');
+                </script>
                 <button class="close-modal" style="width:100%; margin-top:20px; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer;">닫기 🥖</button>
             </div>
         </div>
