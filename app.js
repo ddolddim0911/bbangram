@@ -286,6 +286,7 @@ function openDetailModal(title, price, longDesc, imgs) {
                 <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
                 <p style="font-size:1.3rem; color:#D35400; font-weight:800; margin-bottom:15px; border-bottom:3px dashed #FFDE6A; padding-bottom:8px;">${price}</p>
                 <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all;">${longDesc}</p>
+                modal.querySelector("#long-desc-area").addEventListener("mousedown", (e) => e.stopPropagation());
                 <button class="close-modal" style="width:100%; margin-top:20px; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer;">닫기 🥖</button>
             </div>
         </div>
