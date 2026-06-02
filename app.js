@@ -13,8 +13,10 @@ const db = firebase.firestore();
 document.addEventListener("DOMContentLoaded", () => {
     
     // 불펌 방지 기능
-    document.addEventListener("contextmenu", e => e.preventDefault());
-    document.addEventListener("selectstart", e => e.preventDefault());
+    // 내용 넣기
+    document.getElementById("long-desc-area").innerHTML = longDesc.trim().replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
+    // 타입 넣기 (type 변수가 정의되어 있다고 가정)
+    document.getElementById("type-display-area").innerText = typeof type !== 'undefined' ? type : "타입 정보 없음";
 
     // 🔑 비밀 암호 로그인 기능
     const loginBtn = document.getElementById("login-btn");
@@ -279,14 +281,8 @@ function openDetailModal(title, price, longDesc, imgs) {
                 </div>
                 ${showArrows ? `<div id="img-counter" style="text-align:center; margin-bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>` : ''}
                 <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
-                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; margin:0; padding:0;"></p>
-                <script>
-                    const descEl = document.getElementById("long-desc-area");
-                    // .trimStart()를 사용해서 맨 앞의 공백만 싹 지웁니다!
-                    const rawText = `${longDesc}`.trimStart(); 
-                    const linkedText = rawText.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
-                    descEl.innerHTML = linkedText;
-                </script>
+                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; user-select:none; -webkit-user-select:none; -ms-user-select:none; margin:0; padding:0;"></p>
+            <div id="type-display-area" style="font-size:0.9rem; color:#888;"></div>
         </div>
     `;
 
