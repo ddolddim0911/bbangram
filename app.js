@@ -270,7 +270,6 @@ function openDetailModal(title, price, longDesc, imgs) {
                 <div class="window-address-bar" style="margin-left: 15px; font-weight: bold; color: #4A2E1B;">📋 빵집 상세 메뉴판</div>
             </div>
             <div class="window-content" style="max-height:70vh; overflow-y:auto; padding:20px;">
-                // openDetailModal 함수 안의 이미지 div 스타일을 아래처럼 바꿔보세요
                  <div style="position:relative; width:100%; height:400px; background: transparent; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden; margin-bottom:20px;">
                      <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
                     ${showArrows ? `
