@@ -12,11 +12,24 @@ const db = firebase.firestore();
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 불펌 방지 기능
-    // 내용 넣기
-    document.getElementById("long-desc-area").innerHTML = longDesc.trim().replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
-    // 타입 넣기 (type 변수가 정의되어 있다고 가정)
-    document.getElementById("type-display-area").innerText = typeof type !== 'undefined' ? type : "타입 정보 없음";
+    // 🔒 불펌 및 이미지/글자 드래그 방지 스타일 강제 주입 (관리자 입력창은 정상 작동되도록 예외 처리)
+    const dragStyle = document.createElement("style");
+    dragStyle.innerHTML = `
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+    `;
+    document.head.appendChild(dragStyle);
 
     // 🔑 비밀 암호 로그인 기능
     const loginBtn = document.getElementById("login-btn");
@@ -49,8 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 📥 카드 그리기 함수
-    function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order, allCardsData) {
+    // 📥 카드 그리기 함수 (타입 데이터를 안전하게 받도록 구조 수정)
+    function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order, type) {
         const typeContainer = document.getElementById("type-container");
         const newCard = document.createElement("div");
         newCard.className = "type-card";
@@ -63,12 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
         let adminBtnsHtml = "";
         if (getAdminStatus()) {
             adminBtnsHtml = `
-                <!-- 좌측 상단: 위아래 순서 변경 화살표 버튼 ↕️ -->
                 <div style="position:absolute; top:15px; left:15px; z-index:10; display:flex; gap:5px;">
                     <button class="move-up-btn" data-id="${docId}" data-order="${order}" style="background:#FFF; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B; font-size:0.8rem; display:flex; justify-content:center; align-items:center;">▲</button>
                     <button class="move-down-btn" data-id="${docId}" data-order="${order}" style="background:#FFF; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B; font-size:0.8rem; display:flex; justify-content:center; align-items:center;">▼</button>
                 </div>
-                <!-- 우측 상단: 수정 및 삭제 버튼 🛠️ -->
                 <div style="position:absolute; top:15px; right:15px; z-index:10; display:flex; gap:8px;">
                     <button class="edit-card-btn" data-id="${docId}" style="background:#FFDE6A; color:#4A2E1B; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">✏️</button>
                     <button class="delete-card-btn" data-id="${docId}" style="background:#FF6B6B; color:white; border:3px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #4A2E1B;">❌</button>
@@ -89,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newCard.addEventListener("click", (e) => {
             const tc = e.target.classList;
             if (tc.contains("delete-card-btn") || tc.contains("edit-card-btn") || tc.contains("move-up-btn") || tc.contains("move-down-btn")) return;
-            openDetailModal(title, price, longDesc, imgs);
+            openDetailModal(title, price, longDesc, imgs, type);
         });
 
         typeContainer.appendChild(newCard);
@@ -102,7 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentId = e.target.getAttribute("data-id");
             const currentOrder = parseInt(e.target.getAttribute("data-order"));
 
-            // 내 바로 위에 있는 카드 찾기
             const snapshot = await db.collection("commission_types").orderBy("order", "desc").get();
             let prevDoc = null;
             
@@ -116,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (prevDoc) {
-                // 내 순서와 윗 카드의 순서를 맞바꾸기
                 const prevId = prevDoc.id;
                 const prevOrder = prevDoc.data().order;
 
@@ -138,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentId = e.target.getAttribute("data-id");
             const currentOrder = parseInt(e.target.getAttribute("data-order"));
 
-            // 내 바로 아래에 있는 카드 찾기
             const snapshot = await db.collection("commission_types").orderBy("order", "asc").get();
             let nextDoc = null;
             
@@ -152,7 +160,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (nextDoc) {
-                // 내 순서와 아랫 카드의 순서를 맞바꾸기
                 const nextId = nextDoc.id;
                 const nextOrder = nextDoc.data().order;
 
@@ -246,73 +253,82 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-// 🔍 상세 팝업창(모달) 열기 함수
-function openDetailModal(title, price, longDesc, imgs) {
-    if (document.getElementById("detail-modal")) return;
+    // 🔍 상세 팝업창(모달) 열기 함수 (공백 완벽 제거 및 타입 정상 매핑)
+    function openDetailModal(title, price, longDesc, imgs, type) {
+        if (document.getElementById("detail-modal")) return;
 
-    let currentImgIdx = 0;
-    const modal = document.createElement("div");
-    modal.id = "detail-modal";
-    Object.assign(modal.style, {
-        position: "fixed", top: "0", left: "0", width: "100%", height: "100%",
-        backgroundColor: "rgba(74, 46, 27, 0.4)", zIndex: "1000",
-        display: "flex", justifyContent: "center", alignItems: "center", padding: "20px"
-    });
+        let currentImgIdx = 0;
+        const modal = document.createElement("div");
+        modal.id = "detail-modal";
+        Object.assign(modal.style, {
+            position: "fixed", top: "0", left: "0", width: "100%", height: "100%",
+            backgroundColor: "rgba(74, 46, 27, 0.4)", zIndex: "1000",
+            display: "flex", justifyContent: "center", alignItems: "center", padding: "20px"
+        });
 
-    const showArrows = imgs.length > 1;
+        const showArrows = imgs.length > 1;
 
-    modal.innerHTML = `
-        <div class="window-frame" style="width:100%; max-width:500px; background:#FFFDF8; animation: popUp 0.25s ease-out; border: 3px solid #4A2E1B; border-radius: 20px; overflow: hidden;">
-            <div class="window-header" style="background: #FFDE6A; padding: 10px; display: flex; align-items: center; border-bottom: 3px solid #4A2E1B;">
-                <div class="window-buttons" style="display:flex; gap: 5px;">
-                    <span class="win-dot red close-modal" style="width:12px; height:12px; border-radius:50%; background-color:#FF6B6B; cursor:pointer;"></span>
-                    <span class="win-dot yellow" style="width:12px; height:12px; border-radius:50%; background-color:#ffdd1d;"></span>
-                    <span class="win-dot green" style="width:12px; height:12px; border-radius:50%; background-color:#ffeb9a;"></span>
+        modal.innerHTML = `
+            <div class="window-frame" style="width:100%; max-width:500px; background:#FFFDF8; animation: popUp 0.25s ease-out; border: 3px solid #4A2E1B; border-radius: 20px; overflow: hidden;">
+                <div class="window-header" style="background: #FFDE6A; padding: 10px; display: flex; align-items: center; border-bottom: 3px solid #4A2E1B;">
+                    <div class="window-buttons" style="display:flex; gap: 5px;">
+                        <span class="win-dot red close-modal" style="width:12px; height:12px; border-radius:50%; background-color:#FF6B6B; cursor:pointer;"></span>
+                        <span class="win-dot yellow" style="width:12px; height:12px; border-radius:50%; background-color:#ffdd1d;"></span>
+                        <span class="win-dot green" style="width:12px; height:12px; border-radius:50%; background-color:#ffeb9a;"></span>
+                    </div>
+                    <div class="window-address-bar" style="margin-left: 15px; font-weight: bold; color: #4A2E1B;">📋 빵집 상세 메뉴판</div>
                 </div>
-                <div class="window-address-bar" style="margin-left: 15px; font-weight: bold; color: #4A2E1B;">📋 빵집 상세 메뉴판</div>
+                <div class="window-content" style="max-height:70vh; overflow-y:auto; padding:20px;">
+                    <div style="position:relative; width:100%; height:400px; background: transparent; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden; margin-bottom:20px;">
+                        <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
+                        ${showArrows ? `
+                            <button id="prev-img-btn" style="position:absolute; top:50%; left:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">◀</button>
+                            <button id="next-img-btn" style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">▶</button>
+                        ` : ''}
+                    </div>
+                    ${showArrows ? `<div id="img-counter" style="text-align:center; margin-bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>` : ''}
+                    <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
+                    <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; margin:0; padding:0;"></p>
+                    <div id="type-display-area" style="font-size:0.9rem; color:#888; margin-top:12px; font-weight:bold;"></div>
+                </div>
             </div>
-            <div class="window-content" style="max-height:70vh; overflow-y:auto; padding:20px;">
-                 <div style="position:relative; width:100%; height:400px; background: transparent; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden; margin-bottom:20px;">
-                     <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">
-                    ${showArrows ? `
-                        <button id="prev-img-btn" style="position:absolute; top:50%; left:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">◀</button>
-                        <button id="next-img-btn" style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">▶</button>
-                    ` : ''}
-                </div>
-                ${showArrows ? `<div id="img-counter" style="text-align:center; margin-bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>` : ''}
-                <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
-                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; user-select:none; -webkit-user-select:none; -ms-user-select:none; margin:0; padding:0;"></p>
-            <div id="type-display-area" style="font-size:0.9rem; color:#888;"></div>
-        </div>
-    `;
+        `;
 
-    document.body.appendChild(modal);
+        document.body.appendChild(modal);
 
-    // 이미지 슬라이더 로직
-    if (showArrows) {
-        const sliderImg = modal.querySelector("#modal-slider-img");
-        const counterTxt = modal.querySelector("#img-counter");
-        modal.querySelector("#prev-img-btn").onclick = (e) => {
-            e.stopPropagation();
-            currentImgIdx = (currentImgIdx === 0) ? imgs.length - 1 : currentImgIdx - 1;
-            sliderImg.src = imgs[currentImgIdx];
-            counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
-        };
-        modal.querySelector("#next-img-btn").onclick = (e) => {
-            e.stopPropagation();
-            currentImgIdx = (currentImgIdx === imgs.length - 1) ? 0 : currentImgIdx + 1;
-            sliderImg.src = imgs[currentImgIdx];
-            counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
-        };
+        // 🛠️ 첫 줄이 붕 뜨는 공백 현상 완벽 차단 및 링크 자동 연결
+        const cleanText = longDesc.trim();
+        const formattedText = cleanText.replace(/(https?:\/\/[^\s]+)/g, (match) => `<a href="${match}" target="_blank" style="color:#D35400; text-decoration:underline;">${match}</a>`);
+        document.getElementById("long-desc-area").innerHTML = formattedText;
+
+        // 🛠️ 대피해 있던 타입 정보를 화면에 정확히 주입
+        document.getElementById("type-display-area").innerText = type ? `타입: ${type}` : "타입 정보 없음";
+
+        // 이미지 슬라이더 로직
+        if (showArrows) {
+            const sliderImg = modal.querySelector("#modal-slider-img");
+            const counterTxt = modal.querySelector("#img-counter");
+            modal.querySelector("#prev-img-btn").onclick = (e) => {
+                e.stopPropagation();
+                currentImgIdx = (currentImgIdx === 0) ? imgs.length - 1 : currentImgIdx - 1;
+                sliderImg.src = imgs[currentImgIdx];
+                counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
+            };
+            modal.querySelector("#next-img-btn").onclick = (e) => {
+                e.stopPropagation();
+                currentImgIdx = (currentImgIdx === imgs.length - 1) ? 0 : currentImgIdx + 1;
+                sliderImg.src = imgs[currentImgIdx];
+                counterTxt.innerText = `${currentImgIdx + 1} / ${imgs.length}`;
+            };
+        }
+
+        // 닫기 이벤트 통합
+        const closeModal = () => modal.remove();
+        modal.querySelectorAll(".close-modal").forEach(btn => btn.onclick = closeModal);
+        modal.onclick = (e) => { if (e.target === modal) closeModal(); };
     }
 
-    // 닫기 이벤트 통합
-    const closeModal = () => modal.remove();
-    modal.querySelectorAll(".close-modal").forEach(btn => btn.onclick = closeModal);
-    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-}
-
-    // 🚚 창고에서 order(순서) 기준으로 정렬해서 가져오기!
+    // 🚚 창고에서 order(순서) 기준으로 정렬해서 가져오며 type 필드도 같이 추출하도록 연동
     db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
         snapshot.forEach((doc) => {
             const data = doc.data();
@@ -320,7 +336,8 @@ function openDetailModal(title, price, longDesc, imgs) {
             const longDesc = data.longDesc || data.desc || "";
             const imgs = data.imageUrl || [];
             const order = data.order || 0;
-            drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs, order);
+            const type = data.type || ""; 
+            drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs, order, type);
         });
     });
 
@@ -374,7 +391,6 @@ function openDetailModal(title, price, longDesc, imgs) {
             submitBtn.innerText = "빵 맛있게 다이어트 시키는 중... 🥖";
 
             try {
-                // 현재 등록된 빵 중 가장 높은 order 번호 찾기 (순서가 꼬이지 않게 계속 뒤로 붙임)
                 const snapshot = await db.collection("commission_types").orderBy("order", "desc").limit(1).get();
                 let nextOrder = 1;
                 if (!snapshot.empty) {
@@ -390,13 +406,13 @@ function openDetailModal(title, price, longDesc, imgs) {
                     shortDesc: shortDesc,
                     longDesc: longDesc,
                     imageUrl: base64Images, 
-                    order: nextOrder, // 고유 순서 번호 저장!
+                    order: nextOrder, 
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                drawCard(docRef.id, title, price, shortDesc, longDesc, base64Images, nextOrder);
+                drawCard(docRef.id, title, price, shortDesc, longDesc, base64Images, nextOrder, "");
                 alert("창고에 안전하게 다중 샘플 등록 완료! 🍮");
-                location.reload(); // 순서 배치를 정확히 그리기 위해 리로드
+                location.reload(); 
 
             } catch (err) {
                 alert("등록 실패- 에러: " + err.message);
