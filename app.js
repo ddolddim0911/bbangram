@@ -279,8 +279,13 @@ function openDetailModal(title, price, longDesc, imgs) {
                 </div>
                 ${showArrows ? `<div id="img-counter" style="text-align:center; margin-bottom:10px; font-weight:bold; color:#4A2E1B;">1 / ${imgs.length}</div>` : ''}
                 <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
-                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; margin:0; padding:0;">${longDesc.trim().replace(/(https?:\/\/[^\s]+)/g, (match) => `<a href="${match}" target="_blank" style="color:#D35400; text-decoration:underline;">${match}</a>`)}</p><p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; word-break:break-all; margin:0; padding:0;">${longDesc.trim().replace(/\r?\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, (match) => `<a href="${match}" target="_blank" style="color:#D35400; text-decoration:underline;">${match}</a>`)}</p>                    <button class="close-modal" style="width:100%; margin-top:20px; padding:12px; background:#FFDE6A; border:3px solid #4A2E1B; border-radius:12px; font-weight:bold; color:#4A2E1B; cursor:pointer;">닫기 🥖</button>
-            </div>
+                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; word-break:break-all; margin:0; padding:0;"></p>            </div>
+                <script>
+                    const descEl = document.getElementById("long-desc-area");
+                    const rawText = `${longDesc}`.trim();
+                    const formattedText = rawText.replace(/\n/g, '<br>').replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#D35400; text-decoration:underline;">$1</a>');
+                    descEl.innerHTML = formattedText;
+                </script>
         </div>
     `;
 
