@@ -12,7 +12,7 @@ const db = firebase.firestore();
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 🔒 불펌 및 이미지/글자 드래그 방지 스타일 강제 주입 (관리자 입력창은 정상 작동되도록 예외 처리)
+    // 🔒 불펌 및 이미지/글자 드래그 방지 스타일 강제 주입
     const dragStyle = document.createElement("style");
     dragStyle.innerHTML = `
         * {
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 📥 카드 그리기 함수 (타입 데이터를 안전하게 받도록 구조 수정)
+    // 📥 카드 그리기 함수
     function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order, type) {
         const typeContainer = document.getElementById("type-container");
         const newCard = document.createElement("div");
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newCard.addEventListener("click", (e) => {
             const tc = e.target.classList;
             if (tc.contains("delete-card-btn") || tc.contains("edit-card-btn") || tc.contains("move-up-btn") || tc.contains("move-down-btn")) return;
-            openDetailModal(title, price, longDesc, imgs, type);
+            openDetailModal(docId, title, price, longDesc, imgs, type); 
         });
 
         typeContainer.appendChild(newCard);
@@ -253,8 +253,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔍 상세 팝업창(모달) 열기 함수 (공백 완벽 제거 및 타입 정상 매핑)
-    function openDetailModal(title, price, longDesc, imgs, type) {
+    // 🔍 상세 팝업창(모달) 열기 함수 (★익명 기능 완전 탑재판★)
+    function openDetailModal(cardId, title, price, longDesc, imgs, type) {
         if (document.getElementById("detail-modal")) return;
 
         let currentImgIdx = 0;
@@ -290,19 +290,146 @@ document.addEventListener("DOMContentLoaded", () => {
                     <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
                     <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; margin:0; padding:0;"></p>
                     <div id="type-display-area" style="font-size:0.9rem; color:#888; margin-top:12px; font-weight:bold;"></div>
+                    
+                    <hr style="border:0; border-top:2px dashed #4A2E1B; margin:20px 0;">
+                    
+                    <!-- 💬 후기 구역 -->
+                    <h3 style="font-size:1.2rem; color:#4A2E1B; margin-bottom:10px;">🧁 시식 후기</h3>
+                    <div id="reviews-list" style="margin-bottom:15px; max-height:200px; overflow-y:auto; background:#FFF; border:2px solid #4A2E1B; border-radius:10px; padding:10px;">
+                        <p style="color:#aaa; font-size:0.9rem; text-align:center;">후기를 불러오는 중...</p>
+                    </div>
+                    
+                    <!-- ✏️ 후기 작성 칸 (익명 체크박스 추가됨!) -->
+                    <div style="display:flex; flex-direction:column; gap:5px; margin-top:10px;">
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="review-nickname" placeholder="닉네임" style="width:30%; padding:8px; border:2px solid #4A2E1B; border-radius:8px; font-size:0.9rem;">
+                            <input type="text" id="review-content" placeholder="맛있는 후기를 남겨주세요!" style="width:55%; padding:8px; border:2px solid #4A2E1B; border-radius:8px; font-size:0.9rem;">
+                            <button id="submit-review-btn" style="width:15%; background:#FFDE6A; border:2px solid #4A2E1B; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.8rem;">등록</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px; margin-left:2px;">
+                            <input type="checkbox" id="review-anon-check" style="cursor:pointer; width:15px; height:15px;">
+                            <label for="review-anon-check" style="font-size:0.85rem; color:#5C4033; cursor:pointer; font-weight:bold;">익명으로 남기기 (주인장만 내 이름을 볼 수 있습니다 🤫)</label>
+                        </div>
+                    </div>
+                    <p style="font-size:0.75rem; color:#E67E22; margin-top:5px; font-weight:bold;">* 후기는 주인장 승인 후 메뉴판에 노출됩니다! 🍯</p>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
 
-        // 🛠️ 첫 줄이 붕 뜨는 공백 현상 완벽 차단 및 링크 자동 연결
+        // 첫 줄 공백 방지 및 내용 주입
         const cleanText = longDesc.trim();
         const formattedText = cleanText.replace(/(https?:\/\/[^\s]+)/g, (match) => `<a href="${match}" target="_blank" style="color:#D35400; text-decoration:underline;">${match}</a>`);
         document.getElementById("long-desc-area").innerHTML = formattedText;
+        document.getElementById("type-display-area").innerText = type ? `Typo: ${type}` : "타입 정보 없음";
 
-        // 🛠️ 대피해 있던 타입 정보를 화면에 정확히 주입
-        document.getElementById("type-display-area").innerText = type ? `타입: ${type}` : "타입 정보 없음";
+        // 📥 후기 가져오기 실시간 함수
+        const reviewsList = document.getElementById("reviews-list");
+        db.collection("reviews")
+          .where("cardId", "==", cardId)
+          .orderBy("timestamp", "asc")
+          .onSnapshot((snapshot) => {
+              reviewsList.innerHTML = "";
+              if (snapshot.empty) {
+                  reviewsList.innerHTML = `<p style="color:#aaa; font-size:0.9rem; text-align:center;">아직 도착한 후기가 없어요. 첫 후기를 남겨보세요! 🧁</p>`;
+                  return;
+              }
+              
+              snapshot.forEach((doc) => {
+                  const rData = doc.data();
+                  const isAdmin = getAdminStatus();
+                  
+                  // 일반 유저에겐 승인된 것만 노출, 관리자에겐 대기 글도 노출
+                  if (rData.isApproved || isAdmin) {
+                      const rDiv = document.createElement("div");
+                      rDiv.style.padding = "5px 0";
+                      rDiv.style.borderBottom = "1px dashed #DDD";
+                      rDiv.style.display = "flex";
+                      rDiv.style.justifyContent = "space-between";
+                      rDiv.style.alignItems = "center";
+                      
+                      // 이름 결정 로직: 익명 체크했고 승인 완료된 상태면 일반 유저에겐 "익명의 손님"으로 출력
+                      let displayName = rData.nickname;
+                      if (rData.isAnonymous) {
+                          if (isAdmin) {
+                              // 👑 람님 화면에는 원래 이름 뒤에 (익명 요청)이라고 표시해 줍니다!
+                              displayName = `${rData.nickname} 🔒(익명요청)`;
+                          } else {
+                              // 👥 일반 손님 화면에는 철저히 숨겨서 출력!
+                              displayName = "익명";
+                          }
+                      }
+
+                      let adminApproveBtn = "";
+                      if (isAdmin && !rData.isApproved) {
+                          adminApproveBtn = `<button class="approve-review-btn" data-id="${doc.id}" style="background:#2ECC71; color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.75rem; cursor:pointer; margin-left:5px;">승인하기</button>`;
+                      }
+                      
+                      let deleteReviewBtn = "";
+                      if (isAdmin) {
+                          deleteReviewBtn = `<span class="delete-review-btn" data-id="${doc.id}" style="color:#FF6B6B; cursor:pointer; font-size:0.8rem; margin-left:8px;">❌</span>`;
+                      }
+
+                      rDiv.innerHTML = `
+                          <span style="font-size:0.9rem; color:#5C4033;">
+                              <strong>${displayName}:</strong> ${rData.content} 
+                              ${rData.isApproved ? '' : '<span style="color:#E67E22; font-size:0.75rem;">(대기중)</span>'}
+                          </span>
+                          <div>${adminApproveBtn}${deleteReviewBtn}</div>
+                      `;
+                      reviewsList.appendChild(rDiv);
+                  }
+              });
+              
+              if(reviewsList.innerHTML === "") {
+                  reviewsList.innerHTML = `<p style="color:#aaa; font-size:0.9rem; text-align:center;">아직 도착한 후기가 없어요. 첫 후기를 남겨보세요! 🧁</p>`;
+              }
+          });
+
+        // ✏️ 후기 등록 버튼 누를 때
+        modal.querySelector("#submit-review-btn").onclick = () => {
+            const nickname = modal.querySelector("#review-nickname").value.trim();
+            const content = modal.querySelector("#review-content").value.trim();
+            const isAnonymous = modal.querySelector("#review-anon-check").checked; // 익명 체크박스 여부 확인!
+            
+            if (!nickname || !content) {
+                alert("닉네임과 후기 내용을 모두 적어주세요! 🍰");
+                return;
+            }
+            
+            db.collection("reviews").add({
+                cardId: cardId,
+                nickname: nickname,
+                content: content,
+                isApproved: false, 
+                isAnonymous: isAnonymous, // 익명 상태 함께 저장!
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("후기가 성공적으로 접수되었습니다!\n주인장 승인 후 메뉴판에 표시됩니다! 🍮");
+                modal.querySelector("#review-nickname").value = "";
+                modal.querySelector("#review-content").value = "";
+                modal.querySelector("#review-anon-check").checked = false;
+            });
+        };
+
+        // 👑 관리자 전용 후기 승인 및 삭제 이벤트 바인딩
+        reviewsList.onclick = (e) => {
+            if (e.target.classList.contains("approve-review-btn")) {
+                const rId = e.target.getAttribute("data-id");
+                db.collection("reviews").doc(rId).update({ isApproved: true }).then(() => {
+                    alert("후기를 승인하여 메뉴판에 등록했습니다! 🍞");
+                });
+            }
+            if (e.target.classList.contains("delete-review-btn")) {
+                if (confirm("이 후기를 영구 삭제하시겠습니까?")) {
+                    const rId = e.target.getAttribute("data-id");
+                    db.collection("reviews").doc(rId).delete().then(() => {
+                        alert("후기가 삭제되었습니다.");
+                    });
+                }
+            }
+        };
 
         // 이미지 슬라이더 로직
         if (showArrows) {
@@ -322,13 +449,13 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         }
 
-        // 닫기 이벤트 통합
+        // 닫기 이벤트
         const closeModal = () => modal.remove();
         modal.querySelectorAll(".close-modal").forEach(btn => btn.onclick = closeModal);
         modal.onclick = (e) => { if (e.target === modal) closeModal(); };
     }
 
-    // 🚚 창고에서 order(순서) 기준으로 정렬해서 가져오며 type 필드도 같이 추출하도록 연동
+    // 🚚 데이터 불러오기
     db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
         snapshot.forEach((doc) => {
             const data = doc.data();
@@ -341,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 🎨 이미지 다이어트(압축) 마법 함수
+    // 🎨 이미지 압축 마법 함수
     function resizeImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -372,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🎨 다중 업로드 등록 버튼 기능 (등록 시 고유 순서 번호 부여)
+    // 🎨 다중 업로드 등록 버튼 기능
     const submitBtn = document.getElementById("submit-btn");
     if (submitBtn) {
         submitBtn.addEventListener("click", async () => {
