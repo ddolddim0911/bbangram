@@ -1,4 +1,4 @@
-// 🔥 파이어베이스 설정 및 초기화
+// 설정 정보 (깃허브나 vercel에 올려서 공개되어도 위의 '보안 규칙' 덕분에 안전합니다!)
 const firebaseConfig = {
     apiKey: "AIzaSyAzQIq6NTAJlRKDX9VQjd3bXzLlGYh5wn0",
     authDomain: "my-commission-8d480.firebaseapp.com",
@@ -10,24 +10,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore(); 
-
-// 🔒 F12 개발자 도구 및 마우스 우클릭 차단
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F12') { e.preventDefault(); return false; }
-    if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
-    if (e.ctrlKey && e.shiftKey && e.key === 'J') { e.preventDefault(); return false; }
-    if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
-    if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
-});
-
-// 🔒 불펌 및 이미지/글자 드래그 방지
-const dragStyle = document.createElement("style");
-dragStyle.innerHTML = `
-    * { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-user-drag: none; }
-    input, textarea { -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; user-select: text !important; }
-`;
-document.head.appendChild(dragStyle);
 
 // 🔑 관리자 로그인 기능
 const adminLoginBtn = document.getElementById("admin-login-btn");
@@ -42,7 +24,7 @@ if (adminLoginBtn) {
                     alert("마스터 로그인 성공! 👑");
                     location.reload(); 
                 })
-                .catch(() => alert("로그인 실패: 신 정보가 틀렸습니다!"));
+                .catch(() => alert("로그인 실패: 인증 정보가 틀렸습니다!"));
         }
     };
 }
