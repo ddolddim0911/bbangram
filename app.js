@@ -12,43 +12,17 @@ const db = firebase.firestore();
 
 document.addEventListener("DOMContentLoaded", () => {
     // 🔒 [강력 보안] F12 개발자 도구 및 마우스 우클릭 완벽 차단
-// 1. 마우스 우클릭 메뉴(컨텍스트 메뉴) 금지
-document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
 
-// 2. 단축키 차단 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U 등)
-document.addEventListener('keydown', (e) => {
-    // F12 차단
-    if (e.key === 'F12') {
-        e.preventDefault();
-        return false;
-    }
-    
-    // Ctrl + Shift + I (개발자 도구 단축키) 차단
-    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
-        e.preventDefault();
-        return false;
-    }
-    
-    // Ctrl + Shift + J (콘솔 창 단축키) 차단
-    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
-        e.preventDefault();
-        return false;
-    }
-    
-    // Ctrl + U (페이지 소스 보기) 차단
-    if (e.ctrlKey && e.key === 'u') {
-        e.preventDefault();
-        return false;
-    }
-    
-    // Ctrl + S (페이지 저장) 차단
-    if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        return false;
-    }
-});
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F12') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.shiftKey && e.key === 'J') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return false; }
+        if (e.ctrlKey && e.key === 's') { e.preventDefault(); return false; }
+    });
     
     // 🔒 불펌 및 이미지/글자 드래그 방지 스타일 강제 주입
     const dragStyle = document.createElement("style");
@@ -70,49 +44,47 @@ document.addEventListener('keydown', (e) => {
     document.head.appendChild(dragStyle);
 
     // 🔑 비밀 암호 로그인 기능
-    // 관리자 로그인 버튼 눌렀을 때
-    document.getElementById("admin-login-btn").onclick = () => {
-        // 1. 파이어베이스 인증(로그인) 창 띄우기
-        const email = prompt("관리자 이메일을 입력하세요:");
-        const password = prompt("비밀번호를 입력하세요:");
+    const adminLoginBtn = document.getElementById("admin-login-btn");
+    if (adminLoginBtn) {
+        adminLoginBtn.onclick = () => {
+            const email = prompt("관리자 이메일을 입력하세요:");
+            const password = prompt("비밀번호를 입력하세요:");
 
-        if (email && password) {
-            // 2. 파이어베이스 서버에 로그인 요청!
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    alert("마스터 로그인 성공! 이제 승인/삭제 권한이 부여되었습니다. 👑");
-                        function getAdminStatus() {
-        return sessionStorage.getItem("isAdmin") === "true";
+            if (email && password) {
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        alert("마스터 로그인 성공! 이제 승인/삭제 권한이 부여되었습니다. 👑");
+                        location.reload(); 
+                    })
+                    .catch((error) => {
+                        alert("로그인 실패: 이메일이나 비밀번호가 틀렸습니다!");
+                    });
+            }
+        };
     }
 
-                function checkLoginStatus() {
-                    const adminPanel = document.getElementById("admin-panel");
-                    if (adminPanel) {
-                        if (getAdminStatus()) {
-                            adminPanel.style.display = "block";
-                        } else {
-                            adminPanel.style.display = "none";
-                        }
-                    }
-                }
-                    location.reload(); 
-                })
-                .catch((error) => {
-                    alert("로그인 실패: 이메일이나 비밀번호가 틀렸습니다!");
-                });
-        }
-    };
-
-    // ★ 중요: 현재 람님이 로그인 상태인지 확인해서 관리자 버튼(승인/삭제) 띄워주는 로직
+    // ★ 중요 고정 함수들 (감옥 밖으로 탈출 성공)
     function getAdminStatus() {
-        // 파이어베이스에 현재 로그인된 유저가 있으면 true(관리자), 없으면 false(일반손님) 반환
         const user = firebase.auth().currentUser;
         return user !== null;
+    }
+
+    function checkLoginStatus() {
+        const adminPanel = document.getElementById("admin-panel");
+        if (adminPanel) {
+            if (getAdminStatus()) {
+                adminPanel.style.display = "block";
+            } else {
+                adminPanel.style.display = "none";
+            }
+        }
     }
 
     // 📥 카드 그리기 함수
     function drawCard(docId, title, price, shortDesc, longDesc, imageUrls, order, type) {
         const typeContainer = document.getElementById("type-container");
+        if (!typeContainer) return;
+
         const newCard = document.createElement("div");
         newCard.className = "type-card";
         newCard.style.position = "relative"; 
@@ -167,16 +139,13 @@ document.addEventListener('keydown', (e) => {
             snapshot.docs.forEach(doc => {
                 const docOrder = doc.data().order || 0;
                 if (docOrder < currentOrder) {
-                    if (!prevDoc || docOrder > prevDoc.data().order) {
-                        prevDoc = doc;
-                    }
+                    if (!prevDoc || docOrder > prevDoc.data().order) { prevDoc = doc; }
                 }
             });
 
             if (prevDoc) {
                 const prevId = prevDoc.id;
                 const prevOrder = prevDoc.data().order;
-
                 const batch = db.batch();
                 batch.update(db.collection("commission_types").doc(currentId), { order: prevOrder });
                 batch.update(db.collection("commission_types").doc(prevId), { order: currentOrder });
@@ -201,16 +170,13 @@ document.addEventListener('keydown', (e) => {
             snapshot.docs.forEach(doc => {
                 const docOrder = doc.data().order || 0;
                 if (docOrder > currentOrder) {
-                    if (!nextDoc || docOrder < nextDoc.data().order) {
-                        nextDoc = doc;
-                    }
+                    if (!nextDoc || docOrder < nextDoc.data().order) { nextDoc = doc; }
                 }
             });
 
             if (nextDoc) {
                 const nextId = nextDoc.id;
                 const nextOrder = nextDoc.data().order;
-
                 const batch = db.batch();
                 batch.update(db.collection("commission_types").doc(currentId), { order: nextOrder });
                 batch.update(db.collection("commission_types").doc(nextId), { order: currentOrder });
@@ -250,7 +216,6 @@ document.addEventListener('keydown', (e) => {
                     document.getElementById("edit-price").value = data.price || "";
                     document.getElementById("edit-short-desc").value = data.shortDesc || data.desc || "";
                     document.getElementById("edit-long-desc").value = data.longDesc || data.desc || "";
-                    
                     document.getElementById("edit-modal").style.display = "flex";
                 }
             });
@@ -260,7 +225,6 @@ document.addEventListener('keydown', (e) => {
     const closeEditBtn = document.getElementById("close-edit-btn");
     if (closeEditBtn) { closeEditBtn.addEventListener("click", () => { document.getElementById("edit-modal").style.display = "none"; }); }
 
-    // ✏️ 수정 완료 버튼 클릭 시 작동
     const updateBtn = document.getElementById("update-btn");
     if (updateBtn) {
         updateBtn.addEventListener("click", () => {
@@ -301,7 +265,7 @@ document.addEventListener('keydown', (e) => {
         });
     }
 
-    // 🔍 상세 팝업창(모달) 열기 함수 (★익명 기능 완전 탑재판★)
+    // 🔍 상세 팝업창(모달) 열기 함수
     function openDetailModal(cardId, title, price, longDesc, imgs, type) {
         if (document.getElementById("detail-modal")) return;
 
@@ -338,16 +302,11 @@ document.addEventListener('keydown', (e) => {
                     <h2 style="font-size:1.6rem; font-weight:900; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
                     <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all; margin:0; padding:0;"></p>
                     <div id="type-display-area" style="font-size:0.9rem; color:#888; margin-top:12px; font-weight:bold;"></div>
-                    
                     <hr style="border:0; border-top:2px dashed #4A2E1B; margin:20px 0;">
-                    
-                    <!-- 💬 후기 구역 -->
                     <h3 style="font-size:1.2rem; color:#4A2E1B; margin-bottom:10px;">🧁 시식 후기</h3>
                     <div id="reviews-list" style="margin-bottom:15px; max-height:200px; overflow-y:auto; background:#FFF; border:2px solid #4A2E1B; border-radius:10px; padding:10px;">
                         <p style="color:#aaa; font-size:0.9rem; text-align:center;">후기를 불러오는 중...</p>
                     </div>
-                    
-                    <!-- ✏️ 후기 작성 칸 (익명 체크박스 추가됨!) -->
                     <div style="display:flex; flex-direction:column; gap:5px; margin-top:10px;">
                         <div style="display:flex; gap:5px;">
                             <input type="text" id="review-nickname" placeholder="닉네임" style="width:30%; padding:8px; border:2px solid #4A2E1B; border-radius:8px; font-size:0.9rem;">
@@ -366,13 +325,11 @@ document.addEventListener('keydown', (e) => {
 
         document.body.appendChild(modal);
 
-        // 첫 줄 공백 방지 및 내용 주입
         const cleanText = longDesc.trim();
         const formattedText = cleanText.replace(/(https?:\/\/[^\s]+)/g, (match) => `<a href="${match}" target="_blank" style="color:#D35400; text-decoration:underline;">${match}</a>`);
         document.getElementById("long-desc-area").innerHTML = formattedText;
         document.getElementById("type-display-area").innerText = type ? `Typo: ${type}` : "타입 정보 없음";
 
-        // 📥 후기 가져오기 실시간 함수
         const reviewsList = document.getElementById("reviews-list");
         db.collection("reviews")
           .where("cardId", "==", cardId)
@@ -388,36 +345,20 @@ document.addEventListener('keydown', (e) => {
                   const rData = doc.data();
                   const isAdmin = getAdminStatus();
                   
-                  // 일반 유저에겐 승인된 것만 노출, 관리자에겐 대기 글도 노출
                   if (rData.isApproved || isAdmin) {
                       const rDiv = document.createElement("div");
-                      rDiv.style.padding = "5px 0";
-                      rDiv.style.borderBottom = "1px dashed #DDD";
-                      rDiv.style.display = "flex";
-                      rDiv.style.justifyContent = "space-between";
-                      rDiv.style.alignItems = "center";
+                      Object.assign(rDiv.style, {
+                          padding: "5px 0", borderBottom: "1px dashed #DDD",
+                          display: "flex", justifyContent: "space-between", alignItems: "center"
+                      });
                       
-                      // 이름 결정 로직: 익명 체크했고 승인 완료된 상태면 일반 유저에겐 "익명의 손님"으로 출력
                       let displayName = rData.nickname;
                       if (rData.isAnonymous) {
-                          if (isAdmin) {
-                              // 👑 람님 화면에는 원래 이름 뒤에 (익명 요청)이라고 표시해 줍니다!
-                              displayName = `${rData.nickname} 🔒(익명요청)`;
-                          } else {
-                              // 👥 일반 손님 화면에는 철저히 숨겨서 출력!
-                              displayName = "익명";
-                          }
+                          displayName = isAdmin ? `${rData.nickname} 🔒(익명요청)` : "익명";
                       }
 
-                      let adminApproveBtn = "";
-                      if (isAdmin && !rData.isApproved) {
-                          adminApproveBtn = `<button class="approve-review-btn" data-id="${doc.id}" style="background:#2ECC71; color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.75rem; cursor:pointer; margin-left:5px;">승인하기</button>`;
-                      }
-                      
-                      let deleteReviewBtn = "";
-                      if (isAdmin) {
-                          deleteReviewBtn = `<span class="delete-review-btn" data-id="${doc.id}" style="color:#FF6B6B; cursor:pointer; font-size:0.8rem; margin-left:8px;">❌</span>`;
-                      }
+                      let adminApproveBtn = (isAdmin && !rData.isApproved) ? `<button class="approve-review-btn" data-id="${doc.id}" style="background:#2ECC71; color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.75rem; cursor:pointer; margin-left:5px;">승인하기</button>` : "";
+                      let deleteReviewBtn = isAdmin ? `<span class="delete-review-btn" data-id="${doc.id}" style="color:#FF6B6B; cursor:pointer; font-size:0.8rem; margin-left:8px;">❌</span>` : "";
 
                       rDiv.innerHTML = `
                           <span style="font-size:0.9rem; color:#5C4033;">
@@ -435,11 +376,10 @@ document.addEventListener('keydown', (e) => {
               }
           });
 
-        // ✏️ 후기 등록 버튼 누를 때
         modal.querySelector("#submit-review-btn").onclick = () => {
             const nickname = modal.querySelector("#review-nickname").value.trim();
             const content = modal.querySelector("#review-content").value.trim();
-            const isAnonymous = modal.querySelector("#review-anon-check").checked; // 익명 체크박스 여부 확인!
+            const isAnonymous = modal.querySelector("#review-anon-check").checked;
             
             if (!nickname || !content) {
                 alert("닉네임과 후기 내용을 모두 적어주세요! 🍰");
@@ -447,11 +387,8 @@ document.addEventListener('keydown', (e) => {
             }
             
             db.collection("reviews").add({
-                cardId: cardId,
-                nickname: nickname,
-                content: content,
-                isApproved: false, 
-                isAnonymous: isAnonymous, // 익명 상태 함께 저장!
+                cardId: cardId, nickname: nickname, content: content,
+                isApproved: false, isAnonymous: isAnonymous,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 alert("후기가 성공적으로 접수되었습니다!\n주인장 승인 후 메뉴판에 표시됩니다! 🍮");
@@ -461,25 +398,19 @@ document.addEventListener('keydown', (e) => {
             });
         };
 
-        // 👑 관리자 전용 후기 승인 및 삭제 이벤트 바인딩
         reviewsList.onclick = (e) => {
             if (e.target.classList.contains("approve-review-btn")) {
                 const rId = e.target.getAttribute("data-id");
-                db.collection("reviews").doc(rId).update({ isApproved: true }).then(() => {
-                    alert("후기를 승인하여 메뉴판에 등록했습니다! 🍞");
-                });
+                db.collection("reviews").doc(rId).update({ isApproved: true }).then(() => { alert("후기를 승인했습니다! 🍞"); });
             }
             if (e.target.classList.contains("delete-review-btn")) {
                 if (confirm("이 후기를 영구 삭제하시겠습니까?")) {
                     const rId = e.target.getAttribute("data-id");
-                    db.collection("reviews").doc(rId).delete().then(() => {
-                        alert("후기가 삭제되었습니다.");
-                    });
+                    db.collection("reviews").doc(rId).delete().then(() => { alert("후기가 삭제되었습니다."); });
                 }
             }
         };
 
-        // 이미지 슬라이더 로직
         if (showArrows) {
             const sliderImg = modal.querySelector("#modal-slider-img");
             const counterTxt = modal.querySelector("#img-counter");
@@ -497,105 +428,30 @@ document.addEventListener('keydown', (e) => {
             };
         }
 
-        // 닫기 이벤트
         const closeModal = () => modal.remove();
         modal.querySelectorAll(".close-modal").forEach(btn => btn.onclick = closeModal);
         modal.onclick = (e) => { if (e.target === modal) closeModal(); };
     }
 
-    // 🚚 데이터 불러오기
-    db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const shortDesc = data.shortDesc || data.desc || "";
-            const longDesc = data.longDesc || data.desc || "";
-            const imgs = data.imageUrl || [];
-            const order = data.order || 0;
-            const type = data.type || ""; 
-            drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs, order, type);
-        });
+    // 🌟 핵심 교정 파트: 파이어베이스 공식 감시자(onAuthStateChanged)로 데이터 로딩 감싸기
+    firebase.auth().onAuthStateChanged((user) => {
+        // 기존에 혹시나 그려져 있던 잔여 카드 비우기 (중복 방지)
+        const typeContainer = document.getElementById("type-container");
+        if (typeContainer) typeContainer.innerHTML = "";
+
+        // 상단 관리자 판넬 유무 체크 및 노출 처리
+        checkLoginStatus();
+
+        // 🚚 검증 완료 후 안전하게 데이터 불러오기
+        db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const shortDesc = data.shortDesc || data.desc || "";
+                const longDesc = data.longDesc || data.desc || "";
+                const imgs = data.imageUrl || [];
+                const order = data.order || 0;
+                const type = data.type || ""; 
+                drawCard(doc.id, data.title, data.price, shortDesc, longDesc, imgs, order, type);
+            });
+        }).catch(err => console.error("데이터 로딩 실패:", err));
     });
-
-    // 🎨 이미지 압축 마법 함수
-    function resizeImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    let width = img.width;
-                    let height = img.height;
-
-                    const MAX_WIDTH = 1024;
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-                    resolve(compressedBase64);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // 🎨 다중 업로드 등록 버튼 기능
-    const submitBtn = document.getElementById("submit-btn");
-    if (submitBtn) {
-        submitBtn.addEventListener("click", async () => {
-            const title = document.getElementById("type-title").value;
-            const price = document.getElementById("type-price").value;
-            const shortDesc = document.getElementById("type-short-desc").value; 
-            const longDesc = document.getElementById("type-long-desc").value;   
-            const imageFiles = document.getElementById("type-image").files;
-
-            if (!title || !price || !shortDesc || !longDesc || imageFiles.length === 0) {
-                alert("빈칸 없이 모든 항목과 그림 파일을 최소 1장 이상 등록해 주세요! 🎨");
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = "빵 맛있게 다이어트 시키는 중... 🥖";
-
-            try {
-                const snapshot = await db.collection("commission_types").orderBy("order", "desc").limit(1).get();
-                let nextOrder = 1;
-                if (!snapshot.empty) {
-                    nextOrder = (snapshot.docs[0].data().order || 0) + 1;
-                }
-
-                const resizePromises = Array.from(imageFiles).slice(0, 5).map(file => resizeImage(file));
-                const base64Images = await Promise.all(resizePromises);
-
-                const docRef = await db.collection("commission_types").add({
-                    title: title,
-                    price: price,
-                    shortDesc: shortDesc,
-                    longDesc: longDesc,
-                    imageUrl: base64Images, 
-                    order: nextOrder, 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                drawCard(docRef.id, title, price, shortDesc, longDesc, base64Images, nextOrder, "");
-                alert("창고에 안전하게 다중 샘플 등록 완료! 🍮");
-                location.reload(); 
-
-            } catch (err) {
-                alert("등록 실패- 에러: " + err.message);
-                submitBtn.disabled = false;
-                submitBtn.innerText = "새 빵 등록하기(업로드)";
-            }
-        });
-    }
-
-    checkLoginStatus();
-});
