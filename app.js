@@ -70,34 +70,44 @@ document.addEventListener('keydown', (e) => {
     document.head.appendChild(dragStyle);
 
     // 🔑 비밀 암호 로그인 기능
-    const loginBtn = document.getElementById("login-btn");
-    if (loginBtn) {
-        loginBtn.addEventListener("click", () => {
-            const password = prompt("비밀방 마스터 암호를 입력하세요:");
-            if (password === "yena0911!") { 
-                alert("비밀방 로그인 성공! 🍯");
-                sessionStorage.setItem("isAdmin", "true");
-                checkLoginStatus();
-                location.reload();
-            } else {
-                alert("암호가 틀렸습니다! 🛑");
-            }
-        });
-    }
+    // 관리자 로그인 버튼 눌렀을 때
+    document.getElementById("admin-login-btn").onclick = () => {
+        // 1. 파이어베이스 인증(로그인) 창 띄우기
+        const email = prompt("관리자 이메일을 입력하세요:");
+        const password = prompt("비밀번호를 입력하세요:");
 
-    function getAdminStatus() {
+        if (email && password) {
+            // 2. 파이어베이스 서버에 로그인 요청!
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    alert("마스터 로그인 성공! 이제 승인/삭제 권한이 부여되었습니다. 👑");
+                        function getAdminStatus() {
         return sessionStorage.getItem("isAdmin") === "true";
     }
 
-    function checkLoginStatus() {
-        const adminPanel = document.getElementById("admin-panel");
-        if (adminPanel) {
-            if (getAdminStatus()) {
-                adminPanel.style.display = "block";
-            } else {
-                adminPanel.style.display = "none";
-            }
+                function checkLoginStatus() {
+                    const adminPanel = document.getElementById("admin-panel");
+                    if (adminPanel) {
+                        if (getAdminStatus()) {
+                            adminPanel.style.display = "block";
+                        } else {
+                            adminPanel.style.display = "none";
+                        }
+                    }
+                }
+                    location.reload(); 
+                })
+                .catch((error) => {
+                    alert("로그인 실패: 이메일이나 비밀번호가 틀렸습니다!");
+                });
         }
+    };
+
+    // ★ 중요: 현재 람님이 로그인 상태인지 확인해서 관리자 버튼(승인/삭제) 띄워주는 로직
+    function getAdminStatus() {
+        // 파이어베이스에 현재 로그인된 유저가 있으면 true(관리자), 없으면 false(일반손님) 반환
+        const user = firebase.auth().currentUser;
+        return user !== null;
     }
 
     // 📥 카드 그리기 함수
