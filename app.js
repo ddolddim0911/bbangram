@@ -11,6 +11,44 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore(); 
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 🔒 [강력 보안] F12 개발자 도구 및 마우스 우클릭 완벽 차단
+// 1. 마우스 우클릭 메뉴(컨텍스트 메뉴) 금지
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+});
+
+// 2. 단축키 차단 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U 등)
+document.addEventListener('keydown', (e) => {
+    // F12 차단
+    if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Ctrl + Shift + I (개발자 도구 단축키) 차단
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Ctrl + Shift + J (콘솔 창 단축키) 차단
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Ctrl + U (페이지 소스 보기) 차단
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Ctrl + S (페이지 저장) 차단
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        return false;
+    }
+});
     
     // 🔒 불펌 및 이미지/글자 드래그 방지 스타일 강제 주입
     const dragStyle = document.createElement("style");
