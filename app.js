@@ -121,7 +121,7 @@ document.addEventListener("click", async (e) => {
     }
 });
 
-// ❌ 삭제 버튼 기능
+// ❌ 카드 삭제 버튼 기능
 document.addEventListener("click", (e) => {
     if (e.target.classList.contains("delete-card-btn")) {
         e.stopPropagation(); 
@@ -135,7 +135,7 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// ✏️ 수정 버튼 기능
+// ✏️ 카드 수정 버튼 기능
 document.addEventListener("click", (e) => {
     if (e.target.classList.contains("edit-card-btn")) {
         e.stopPropagation();
@@ -186,149 +186,33 @@ function saveToFirestore(docId, updateData) {
     });
 }
 
-// 🔍 상세 보기 팝업 모달 함수
-function openDetailModal(cardId, title, price, longDesc, imgs, type) {
-    if (document.getElementById("detail-modal")) return;
-
-    let currentImgIdx = 0;
-    const modal = document.createElement("div");
-    modal.id = "detail-modal";
-    Object.assign(modal.style, {
-        position: "fixed", top: "0", left: "0", width: "100%", height: "100%",
-        backgroundColor: "rgba(74, 46, 27, 0.4)", zIndex: "1000",
-        display: "flex", justifyContent: "center", alignItems: "center", padding: "20px"
-    });
-
-    const showArrows = imgs.length > 1;
-
-    modal.innerHTML = `
-        <div class="window-frame" style="width:100%; max-width:500px; background:#FFFDF8; border: 3px solid #4A2E1B; border-radius: 20px; overflow: hidden;">
-            <div class="window-header" style="background: #FFDE6A; padding: 10px; display: flex; align-items: center; border-bottom: 3px solid #4A2E1B;">
-                <div style="display:flex; gap: 5px;">
-                    <span class="win-dot red close-modal" style="width:12px; height:12px; border-radius:50%; background-color:#FF6B6B; cursor:pointer;"></span>
-                </div>
-                <div style="margin-left: 15px; font-weight: bold; color: #4A2E1B;">📋 상세 메뉴판</div>
-            </div>
-            <div class="window-content" style="max-height:70vh; overflow-y:auto; padding:20px;">
-                <div style="position:relative; width:100%; height:400px; border:3px solid #4A2E1B; border-radius:18px; display:flex; justify-content:center; align-items:center; overflow:hidden; margin-bottom:20px;">
-                    <img id="modal-slider-img" src="${imgs[0]}" style="max-width:100%; max-height:100%; object-fit:contain;">
-                    ${showArrows ? `
-                        <button id="prev-img-btn" style="position:absolute; top:50%; left:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">◀</button>
-                        <button id="next-img-btn" style="position:absolute; top:50%; right:10px; transform:translateY(-50%); background:#FFDE6A; border:2px solid #4A2E1B; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer;">▶</button>
-                    ` : ''}
-                </div>
-                <h2 style="font-size:1.6rem; color:#4A2E1B; margin-bottom:8px;">${title}</h2>
-                <p id="long-desc-area" style="font-size:1rem; line-height:1.7; color:#5C4033; white-space:pre-wrap; word-break:break-all;"></p>
-                <div id="type-display-area" style="font-size:0.9rem; color:#888; margin-top:12px; font-weight:bold;"></div>
-                <hr style="border:0; border-top:2px dashed #4A2E1B; margin:20px 0;">
-                <h3 style="font-size:1.2rem; color:#4A2E1B; margin-bottom:10px;">🧁 후기</h3>
-                <div id="reviews-list" style="margin-bottom:15px; max-height:200px; overflow-y:auto; background:#FFF; border:2px solid #4A2E1B; border-radius:10px; padding:10px;"></div>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="review-nickname" placeholder="닉네임" style="width:30%; padding:8px; border:2px solid #4A2E1B; border-radius:8px;">
-                        <input type="text" id="review-content" placeholder="후기를 남겨주세요!" style="width:55%; padding:8px; border:2px solid #4A2E1B; border-radius:8px;">
-                        <button id="submit-review-btn" style="width:15%; background:#FFDE6A; border:2px solid #4A2E1B; border-radius:8px; font-weight:bold; cursor:pointer;">등록</button>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="review-anon-check"><label for="review-anon-check" style="font-size:0.85rem;">익명</label></div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    document.getElementById("long-desc-area").innerText = longDesc;
-    document.getElementById("type-display-area").innerText = type ? `Typo: ${type}` : "타입 없음";
-
-    const reviewsList = document.getElementById("reviews-list");
-    db.collection("reviews").where("cardId", "==", cardId).orderBy("timestamp", "asc").onSnapshot((snapshot) => {
-        reviewsList.innerHTML = snapshot.empty ? `<p style="color:#aaa; text-align:center;">첫 후기를 남겨보세요!</p>` : "";
-        snapshot.forEach((doc) => {
-            const rData = doc.data();
-            const isAdmin = getAdminStatus();
-            if (rData.isApproved || isAdmin) {
-                const rDiv = document.createElement("div");
-                rDiv.style.padding = "5px 0";
-                rDiv.innerHTML = `<span><strong>${rData.isAnonymous && !isAdmin ? "익명" : rData.nickname}:</strong> ${rData.content}</span>`;
-                reviewsList.appendChild(rDiv);
-            }
-        });
-    });
-
-    modal.querySelector("#submit-review-btn").onclick = () => {
-        const nickname = modal.querySelector("#review-nickname").value.trim();
-        const content = modal.querySelector("#review-content").value.trim();
-        if (!nickname || !content) return alert("내용을 입력하세요!");
-        db.collection("reviews").add({
-            cardId, nickname, content, isApproved: false, isAnonymous: modal.querySelector("#review-anon-check").checked,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => alert("후기가 접수되었습니다! 주인장 승인 후 노출됩니다."));
-    };
-
-    if (showArrows) {
-        modal.querySelector("#prev-img-btn").onclick = () => { currentImgIdx = currentImgIdx === 0 ? imgs.length - 1 : currentImgIdx - 1; modal.querySelector("#modal-slider-img").src = imgs[currentImgIdx]; };
-        modal.querySelector("#next-img-btn").onclick = () => { currentImgIdx = currentImgIdx === imgs.length - 1 ? 0 : currentImgIdx + 1; modal.querySelector("#modal-slider-img").src = imgs[currentImgIdx]; };
+// 🧁 후기 승낙(승인) 버튼 기능
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("approve-review-btn")) {
+        e.stopPropagation();
+        const reviewId = e.target.getAttribute("data-id");
+        
+        db.collection("reviews").doc(reviewId).update({
+            isApproved: true
+        }).then(() => {
+            alert("후기 승낙 완료! 이제 일반 방문자에게도 보입니다. 🍮");
+        }).catch((err) => alert("승인 실패: " + err.message));
     }
-
-    const closeModal = () => modal.remove();
-    modal.querySelector(".close-modal").onclick = closeModal;
-    modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-}
-
-// 🌟 핵심 구동: 페이지 열리자마자 데이터 바로 로딩
-firebase.auth().onAuthStateChanged((user) => {
-    const typeContainer = document.getElementById("type-container");
-    if (typeContainer) typeContainer.innerHTML = "";
-    checkLoginStatus();
-
-    db.collection("commission_types").orderBy("order", "asc").get().then((snapshot) => {
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            drawCard(doc.id, data.title, data.price, data.shortDesc || data.desc, data.longDesc || data.desc, data.imageUrl || [], data.order || 0, data.type || "");
-        });
-    });
 });
 
-// 🎨 이미지 리사이징 및 신규 등록
-function resizeImage(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                let width = img.width; let height = img.height;
-                if (width > 1024) { height *= 1024 / width; width = 1024; }
-                canvas.width = width; canvas.height = height;
-                canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL("image/jpeg", 0.7));
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
+// 🧁 후기 삭제 버튼 기능
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("delete-review-btn")) {
+        e.stopPropagation();
+        if (confirm("이 후기를 정말 삭제하시겠습니까? 🛑")) {
+            const reviewId = e.target.getAttribute("data-id");
+            
+            db.collection("reviews").doc(reviewId).delete().then(() => {
+                alert("후기가 삭제되었습니다!");
+            }).catch((err) => alert("삭제 실패: " + err.message));
+        }
+    }
+});
 
-const submitBtn = document.getElementById("submit-btn");
-if (submitBtn) {
-    submitBtn.onclick = async () => {
-        const title = document.getElementById("type-title").value;
-        const price = document.getElementById("type-price").value;
-        const shortDesc = document.getElementById("type-short-desc").value;
-        const longDesc = document.getElementById("type-long-desc").value;
-        const imageFiles = document.getElementById("type-image").files;
-
-        if (!title || !price || !shortDesc || !longDesc || imageFiles.length === 0) return alert("모든 칸을 채워주세요!");
-
-        submitBtn.disabled = true;
-        const snapshot = await db.collection("commission_types").orderBy("order", "desc").limit(1).get();
-        const nextOrder = snapshot.empty ? 1 : (snapshot.docs[0].data().order || 0) + 1;
-
-        const resizePromises = Array.from(imageFiles).slice(0, 5).map(file => resizeImage(file));
-        const base64Images = await Promise.all(resizePromises);
-
-        await db.collection("commission_types").add({ title, price, shortDesc, longDesc, imageUrl: base64Images, order: nextOrder, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-        alert("등록 완료! 🍮");
-        location.reload();
-    };
-}
+// 🔍 상세 보기 팝업 모달 함수
+function openDetail
